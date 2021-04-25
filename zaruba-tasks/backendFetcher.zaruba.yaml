@@ -1,0 +1,123 @@
+tasks:
+
+  prepareBackendFetcher:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-fetcher
+    timeout: 1h
+    envRef: backendFetcher
+    configRef: backendFetcher
+    config:
+      start: pipenv install
+    lconfigRef: backendFetcher
+
+  testBackendFetcher:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-fetcher
+    dependencies:
+    - prepareBackendFetcher
+    timeout: 1h
+    envRef: backendFetcher
+    configRef: backendFetcher
+    config:
+      start: pipenv run pytest -rP -v --cov="$(pwd)" --cov-report html
+    lconfigRef: backendFetcher
+
+  runBackendFetcher:
+    icon: 🐍
+    extend: core.startService
+    location: ../backend-fetcher
+    dependencies:
+    - prepareBackendFetcher
+    - runMessageBusExample
+    - runDbExample
+    config:
+      start: |
+        pipenv run uvicorn main:app --reload --port={{ .GetConfig "fastApiPort" }}
+    configRef: backendFetcher
+    envRef: backendFetcher
+    lconfRef: backendFetcher
+
+  runBackendFetcherContainer:
+    icon: 🥙
+    extend: core.startDockerContainer
+    dependencies:
+    - buildBackendFetcherImage
+    - runMessageBusExample
+    - runDbExample
+    configRef: backendFetcherContainer
+    lconfigRef: backendFetcher
+    envRef: backendFetcher
+
+  stopBackendFetcherContainer:
+    icon: 🍟
+    extend: core.stopDockerContainer
+    configRef: backendFetcherContainer
+
+  removeBackendFetcherContainer:
+    icon: 🍔
+    extend: core.removeDockerContainer
+    configRef: backendFetcherContainer
+
+  buildBackendFetcherImage:
+    icon: 🍄
+    extend: core.buildDockerImage
+    location: ../backend-fetcher
+    timeout: 1h
+    configRef: backendFetcherContainer
+
+  pushBackendFetcherImage:
+    icon: 🍕
+    extend: core.pushDockerImage
+    dependencies:
+    - buildBackendFetcherImage
+    timeout: 1h
+    configRef: backendFetcherContainer
+
+configs:
+
+  backendFetcher:
+    fastApiPort: '{{ .GetEnv "BACKEND_HTTP_PORT" }}'
+
+  backendFetcherContainer:
+    containerName: backendFetcher
+    imageName: backendfetcher
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  backendFetcher:
+    ports:
+    - '{{ .GetConfig "fastApiPort" }}'
+
+envs:
+
+  backendFetcher:
+    PYTHONUNBUFFERED:
+      default: 1
+    PIPENV_DONT_LOAD_ENV:
+      from: BACKEND_FETCHER_PIPENV_DONT_LOAD_ENV
+      default: 1
+    BACKEND_HTTP_PORT:
+      from: BACKEND_FETCHER_BACKEND_HTTP_PORT
+      default: '5020'
+    BACKEND_MESSAGE_BUS_TYPE:
+      from: BACKEND_FETCHER_BACKEND_MESSAGE_BUS_TYPE
+      default: rmq
+    BACKEND_RABBITMQ_HOST:
+      from: BACKEND_FETCHER_BACKEND_RABBITMQ_HOST
+      default: localhost
+    BACKEND_RABBITMQ_USER:
+      from: BACKEND_FETCHER_BACKEND_RABBITMQ_USER
+      default: root
+    BACKEND_RABBITMQ_PASS:
+      from: BACKEND_FETCHER_BACKEND_RABBITMQ_PASS
+      default: toor
+    BACKEND_RABBITMQ_VHOST:
+      from: BACKEND_FETCHER_BACKEND_RABBITMQ_VHOST
+      default: /
+    BACKEND_SQLALCHEMY_DATABASE_URL:
+      from: BACKEND_FETCHER_BACKEND_SQLALCHEMY_DATABASE_URL
+      default: mysql+pymysql://root:toor@localhost:3306/sample

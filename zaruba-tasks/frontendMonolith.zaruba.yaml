@@ -1,0 +1,122 @@
+inputs:
+
+  frontendMonolith.npmRebuild:
+    default: no
+    options: [yes, no]
+    prompt: Do you want to perform npm rebuild on frontendMonolith?
+    description: npm rebuild on frontendMonolith
+
+  frontendMonolith.removeNodeModules:
+    default: no
+    options: [yes, no]
+    prompt: Do you want to delete node_modules on frontendMonolith?
+    description: Delete node_modules on frontendMonolith
+
+tasks:
+
+  prepareFrontendMonolith:
+    icon: 🐸
+    extend: core.prepareNodeJsApp
+    location: ../frontend
+    inputs:
+    - frontendMonolith.npmRebuild
+    - frontendMonolith.removeNodeModules
+    timeout: 1h
+    envRef: frontendMonolith
+    configRef: frontendMonolith
+    config:
+      installTypeScript: false
+      compileTypeScript: false
+      removeNodeModules: '{{ .GetValue "frontendMonolith.removeNodeModules" }}'
+      npmRebuild: '{{ .GetValue "frontendMonolith.npmRebuild" }}'
+    lconfigRef: frontendMonolith
+
+  testFrontendMonolith:
+    icon: 🐸
+    extend: core.runNvmScript
+    location: ../frontend
+    dependencies:
+    - prepareFrontendMonolith
+    timeout: 1h
+    envRef: frontendMonolith
+    configRef: frontendMonolith
+    config:
+      start: npm test
+    lconfigRef: frontendMonolith
+
+  runFrontendMonolith:
+    icon: 🐸
+    extend: core.startNvmService
+    location: ../frontend
+    dependencies:
+    - prepareFrontendMonolith
+    envRef: frontendMonolith
+    configRef: frontendMonolith
+    config:
+      start: npm run dev
+    lconfigRef: frontendMonolith
+    lconfRef: frontendMonolith
+
+  runFrontendMonolithContainer:
+    icon: 🥓
+    extend: core.startDockerContainer
+    dependencies:
+    - buildFrontendMonolithImage
+    configRef: frontendMonolithContainer
+    lconfigRef: frontendMonolith
+    envRef: frontendMonolith
+
+  stopFrontendMonolithContainer:
+    icon: 🍞
+    extend: core.stopDockerContainer
+    configRef: frontendMonolithContainer
+
+  removeFrontendMonolithContainer:
+    icon: 🍄
+    extend: core.removeDockerContainer
+    configRef: frontendMonolithContainer
+
+  buildFrontendMonolithImage:
+    icon: 🥙
+    extend: core.buildDockerImage
+    location: ../frontend
+    timeout: 1h
+    configRef: frontendMonolithContainer
+
+  pushFrontendMonolithImage:
+    icon: 🥐
+    extend: core.pushDockerImage
+    dependencies:
+    - buildFrontendMonolithImage
+    timeout: 1h
+    configRef: frontendMonolithContainer
+
+configs:
+
+  frontendMonolith:
+    nodeVersion: node
+
+  frontendMonolithContainer:
+    containerName: frontendMonolith
+    imageName: frontendmonolith
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  frontendMonolith:
+    ports:
+    - '{{ .GetEnv "PORT" }}'
+
+envs:
+
+  frontendMonolith:
+    PORT:
+      from: FRONTEND_MONOLITH_PORT
+      default: '3000'
+    BACKEND_URL:
+      from: FRONTEND_MONOLITH_BACKEND_URL
+      default: http://localhost:3010
+    HEADER:
+      from: FRONTEND_MONOLITH_HEADER
+      default: Pokemon Vote (Monolith Backend)

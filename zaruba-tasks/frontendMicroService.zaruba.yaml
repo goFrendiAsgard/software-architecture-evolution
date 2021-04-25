@@ -1,0 +1,122 @@
+inputs:
+
+  frontendMicroService.npmRebuild:
+    default: no
+    options: [yes, no]
+    prompt: Do you want to perform npm rebuild on frontendMicroService?
+    description: npm rebuild on frontendMicroService
+
+  frontendMicroService.removeNodeModules:
+    default: no
+    options: [yes, no]
+    prompt: Do you want to delete node_modules on frontendMicroService?
+    description: Delete node_modules on frontendMicroService
+
+tasks:
+
+  prepareFrontendMicroService:
+    icon: 🐸
+    extend: core.prepareNodeJsApp
+    location: ../frontend
+    inputs:
+    - frontendMicroService.npmRebuild
+    - frontendMicroService.removeNodeModules
+    timeout: 1h
+    envRef: frontendMicroService
+    configRef: frontendMicroService
+    config:
+      installTypeScript: false
+      compileTypeScript: false
+      removeNodeModules: '{{ .GetValue "frontendMicroService.removeNodeModules" }}'
+      npmRebuild: '{{ .GetValue "frontendMicroService.npmRebuild" }}'
+    lconfigRef: frontendMicroService
+
+  testFrontendMicroService:
+    icon: 🐸
+    extend: core.runNvmScript
+    location: ../frontend
+    dependencies:
+    - prepareFrontendMicroService
+    timeout: 1h
+    envRef: frontendMicroService
+    configRef: frontendMicroService
+    config:
+      start: npm test
+    lconfigRef: frontendMicroService
+
+  runFrontendMicroService:
+    icon: 🐸
+    extend: core.startNvmService
+    location: ../frontend
+    dependencies:
+    - prepareFrontendMicroService
+    envRef: frontendMicroService
+    configRef: frontendMicroService
+    config:
+      start: npm run dev
+    lconfigRef: frontendMicroService
+    lconfRef: frontendMicroService
+
+  runFrontendMicroServiceContainer:
+    icon: 🥞
+    extend: core.startDockerContainer
+    dependencies:
+    - buildFrontendMicroServiceImage
+    configRef: frontendMicroServiceContainer
+    lconfigRef: frontendMicroService
+    envRef: frontendMicroService
+
+  stopFrontendMicroServiceContainer:
+    icon: 🥙
+    extend: core.stopDockerContainer
+    configRef: frontendMicroServiceContainer
+
+  removeFrontendMicroServiceContainer:
+    icon: 🍲
+    extend: core.removeDockerContainer
+    configRef: frontendMicroServiceContainer
+
+  buildFrontendMicroServiceImage:
+    icon: 🍞
+    extend: core.buildDockerImage
+    location: ../frontend
+    timeout: 1h
+    configRef: frontendMicroServiceContainer
+
+  pushFrontendMicroServiceImage:
+    icon: 🌰
+    extend: core.pushDockerImage
+    dependencies:
+    - buildFrontendMicroServiceImage
+    timeout: 1h
+    configRef: frontendMicroServiceContainer
+
+configs:
+
+  frontendMicroService:
+    nodeVersion: node
+
+  frontendMicroServiceContainer:
+    containerName: frontendMicroService
+    imageName: frontendmicroservice
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  frontendMicroService:
+    ports:
+    - '{{ .GetEnv "PORT" }}'
+
+envs:
+
+  frontendMicroService:
+    PORT:
+      from: FRONTEND_MICRO_SERVICE_PORT
+      default: '5000'
+    BACKEND_URL:
+      from: FRONTEND_MICRO_SERVICE_BACKEND_URL
+      default: http://localhost:5010
+    HEADER:
+      from: FRONTEND_MICRO_SERVICE_HEADER
+      default: Pokemon Vote (Microservices Backend)

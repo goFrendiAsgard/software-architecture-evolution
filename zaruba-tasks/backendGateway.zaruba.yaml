@@ -1,0 +1,121 @@
+tasks:
+
+  prepareBackendGateway:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-gateway
+    timeout: 1h
+    envRef: backendGateway
+    configRef: backendGateway
+    config:
+      start: pipenv install
+    lconfigRef: backendGateway
+
+  testBackendGateway:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-gateway
+    dependencies:
+    - prepareBackendGateway
+    timeout: 1h
+    envRef: backendGateway
+    configRef: backendGateway
+    config:
+      start: pipenv run pytest -rP -v --cov="$(pwd)" --cov-report html
+    lconfigRef: backendGateway
+
+  runBackendGateway:
+    icon: 🐍
+    extend: core.startService
+    location: ../backend-gateway
+    dependencies:
+    - prepareBackendGateway
+    - runMessageBusExample
+    config:
+      start: |
+        pipenv run uvicorn main:app --reload --port={{ .GetConfig "fastApiPort" }}
+    configRef: backendGateway
+    envRef: backendGateway
+    lconfRef: backendGateway
+
+  runBackendGatewayContainer:
+    icon: 🥞
+    extend: core.startDockerContainer
+    dependencies:
+    - buildBackendGatewayImage
+    - runMessageBusExample
+    configRef: backendGatewayContainer
+    lconfigRef: backendGateway
+    envRef: backendGateway
+
+  stopBackendGatewayContainer:
+    icon: 🍗
+    extend: core.stopDockerContainer
+    configRef: backendGatewayContainer
+
+  removeBackendGatewayContainer:
+    icon: 🥜
+    extend: core.removeDockerContainer
+    configRef: backendGatewayContainer
+
+  buildBackendGatewayImage:
+    icon: 🍲
+    extend: core.buildDockerImage
+    location: ../backend-gateway
+    timeout: 1h
+    configRef: backendGatewayContainer
+
+  pushBackendGatewayImage:
+    icon: 🍖
+    extend: core.pushDockerImage
+    dependencies:
+    - buildBackendGatewayImage
+    timeout: 1h
+    configRef: backendGatewayContainer
+
+configs:
+
+  backendGateway:
+    fastApiPort: '{{ .GetEnv "BACKEND_HTTP_PORT" }}'
+
+  backendGatewayContainer:
+    containerName: backendGateway
+    imageName: backendgateway
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  backendGateway:
+    ports:
+    - '{{ .GetConfig "fastApiPort" }}'
+
+envs:
+
+  backendGateway:
+    PYTHONUNBUFFERED:
+      default: 1
+    PIPENV_DONT_LOAD_ENV:
+      from: BACKEND_GATEWAY_PIPENV_DONT_LOAD_ENV
+      default: 1
+    BACKEND_HTTP_PORT:
+      from: BACKEND_GATEWAY_BACKEND_HTTP_PORT
+      default: '5010'
+    BACKEND_SQLALCHEMY_DATABASE_URL:
+      from: BACKEND_GATEWAY_BACKEND_SQLALCHEMY_DATABASE_URL
+      default: sqlite:///./database.db
+    BACKEND_MESSAGE_BUS_TYPE:
+      from: BACKEND_GATEWAY_BACKEND_MESSAGE_BUS_TYPE
+      default: rmq
+    BACKEND_RABBITMQ_HOST:
+      from: BACKEND_GATEWAY_BACKEND_RABBITMQ_HOST
+      default: localhost
+    BACKEND_RABBITMQ_USER:
+      from: BACKEND_GATEWAY_BACKEND_RABBITMQ_USER
+      default: root
+    BACKEND_RABBITMQ_PASS:
+      from: BACKEND_GATEWAY_BACKEND_RABBITMQ_PASS
+      default: toor
+    BACKEND_RABBITMQ_VHOST:
+      from: BACKEND_GATEWAY_BACKEND_RABBITMQ_VHOST
+      default: /

@@ -1,0 +1,57 @@
+tasks:
+
+  runDbExample:
+    icon: 🐬
+    extend: core.startDockerContainer
+    timeout: 1h
+    config:
+      afterCheck: |
+        set +e
+        docker exec "${CONTAINER_NAME}" mysql -u root -p{{ .GetEnv "MYSQL_ROOT_PASSWORD"}} -e "SELECT VERSION()"
+        until [ "$?" = "0" ]
+        do
+          docker exec "${CONTAINER_NAME}" mysql -u root -p{{ .GetEnv "MYSQL_ROOT_PASSWORD"}} -e "SELECT VERSION()"
+          sleep 3
+        done
+    configRef: dbExample
+    envRef: dbExample
+    lconfRef: dbExample
+
+  stopDbExampleContainer:
+    icon: 🍕
+    extend: core.stopDockerContainer
+    configRef: dbExample
+
+  removeDbExampleContainer:
+    icon: 🍄
+    extend: core.removeDockerContainer
+    configRef: dbExample
+
+configs:
+
+  dbExample:
+    useImagePrefix: false
+    imageName: mysql
+    containerName: dbExample
+    port::3306: 3306
+    expose: config.port
+
+envs:
+
+  dbExample:
+    MYSQL_USER:
+      from: MYSQL_USER
+      default: mysql
+    MYSQL_PASSWORD:
+      from: MYSQL_PASSWORD
+      default: mysql
+    MYSQL_ROOT_PASSWORD:
+      from: MYSQL_ROOT_PASSWORD
+      default: toor
+    MYSQL_DATABASE:
+      from: MYSQL_DATABASE
+      default: sample
+
+lconfigs:
+
+  dbExample: {}

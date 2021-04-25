@@ -1,0 +1,119 @@
+tasks:
+
+  prepareBackendVoter:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-voter
+    timeout: 1h
+    envRef: backendVoter
+    configRef: backendVoter
+    config:
+      start: pipenv install
+    lconfigRef: backendVoter
+
+  testBackendVoter:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-voter
+    dependencies:
+    - prepareBackendVoter
+    timeout: 1h
+    envRef: backendVoter
+    configRef: backendVoter
+    config:
+      start: pipenv run pytest -rP -v --cov="$(pwd)" --cov-report html
+    lconfigRef: backendVoter
+
+  runBackendVoter:
+    icon: 🐍
+    extend: core.startService
+    location: ../backend-voter
+    dependencies:
+    - prepareBackendVoter
+    config:
+      start: |
+        pipenv run uvicorn main:app --reload --port={{ .GetConfig "fastApiPort" }}
+    configRef: backendVoter
+    envRef: backendVoter
+    lconfRef: backendVoter
+
+  runBackendVoterContainer:
+    icon: 🍟
+    extend: core.startDockerContainer
+    dependencies:
+    - buildBackendVoterImage
+    configRef: backendVoterContainer
+    lconfigRef: backendVoter
+    envRef: backendVoter
+
+  stopBackendVoterContainer:
+    icon: 🌮
+    extend: core.stopDockerContainer
+    configRef: backendVoterContainer
+
+  removeBackendVoterContainer:
+    icon: 🍞
+    extend: core.removeDockerContainer
+    configRef: backendVoterContainer
+
+  buildBackendVoterImage:
+    icon: 🧀
+    extend: core.buildDockerImage
+    location: ../backend-voter
+    timeout: 1h
+    configRef: backendVoterContainer
+
+  pushBackendVoterImage:
+    icon: 🌭
+    extend: core.pushDockerImage
+    dependencies:
+    - buildBackendVoterImage
+    timeout: 1h
+    configRef: backendVoterContainer
+
+configs:
+
+  backendVoter:
+    fastApiPort: '{{ .GetEnv "BACKEND_HTTP_PORT" }}'
+
+  backendVoterContainer:
+    containerName: backendVoter
+    imageName: backendvoter
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  backendVoter:
+    ports:
+    - '{{ .GetConfig "fastApiPort" }}'
+
+envs:
+
+  backendVoter:
+    PYTHONUNBUFFERED:
+      default: 1
+    PIPENV_DONT_LOAD_ENV:
+      from: BACKEND_VOTER_PIPENV_DONT_LOAD_ENV
+      default: 1
+    BACKEND_HTTP_PORT:
+      from: BACKEND_VOTER_BACKEND_HTTP_PORT
+      default: '5030'
+    BACKEND_MESSAGE_BUS_TYPE:
+      from: BACKEND_VOTER_BACKEND_MESSAGE_BUS_TYPE
+      default: rmq
+    BACKEND_RABBITMQ_HOST:
+      from: BACKEND_VOTER_BACKEND_RABBITMQ_HOST
+      default: localhost
+    BACKEND_RABBITMQ_USER:
+      from: BACKEND_VOTER_BACKEND_RABBITMQ_USER
+      default: root
+    BACKEND_RABBITMQ_PASS:
+      from: BACKEND_VOTER_BACKEND_RABBITMQ_PASS
+      default: toor
+    BACKEND_RABBITMQ_VHOST:
+      from: BACKEND_VOTER_BACKEND_RABBITMQ_VHOST
+      default: /
+    BACKEND_SQLALCHEMY_DATABASE_URL:
+      from: BACKEND_VOTER_BACKEND_SQLALCHEMY_DATABASE_URL
+      default: mysql+pymysql://root:toor@localhost:3306/sample

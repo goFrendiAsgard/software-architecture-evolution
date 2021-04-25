@@ -1,0 +1,106 @@
+tasks:
+
+  prepareBackendMonolith:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-monolith
+    timeout: 1h
+    envRef: backendMonolith
+    configRef: backendMonolith
+    config:
+      start: pipenv install
+    lconfigRef: backendMonolith
+
+  testBackendMonolith:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../backend-monolith
+    dependencies:
+    - prepareBackendMonolith
+    timeout: 1h
+    envRef: backendMonolith
+    configRef: backendMonolith
+    config:
+      start: pipenv run pytest -rP -v --cov="$(pwd)" --cov-report html
+    lconfigRef: backendMonolith
+
+  runBackendMonolith:
+    icon: 🐍
+    extend: core.startService
+    location: ../backend-monolith
+    dependencies:
+    - prepareBackendMonolith
+    - runDbExample
+    config:
+      start: |
+        pipenv run uvicorn main:app --reload --port={{ .GetConfig "fastApiPort" }}
+    configRef: backendMonolith
+    envRef: backendMonolith
+    lconfRef: backendMonolith
+
+  runBackendMonolithContainer:
+    icon: 🥐
+    extend: core.startDockerContainer
+    dependencies:
+    - buildBackendMonolithImage
+    - runDbExample
+    configRef: backendMonolithContainer
+    lconfigRef: backendMonolith
+    envRef: backendMonolith
+
+  stopBackendMonolithContainer:
+    icon: 🍲
+    extend: core.stopDockerContainer
+    configRef: backendMonolithContainer
+
+  removeBackendMonolithContainer:
+    icon: 🧀
+    extend: core.removeDockerContainer
+    configRef: backendMonolithContainer
+
+  buildBackendMonolithImage:
+    icon: 🥗
+    extend: core.buildDockerImage
+    location: ../backend-monolith
+    timeout: 1h
+    configRef: backendMonolithContainer
+
+  pushBackendMonolithImage:
+    icon: 🍲
+    extend: core.pushDockerImage
+    dependencies:
+    - buildBackendMonolithImage
+    timeout: 1h
+    configRef: backendMonolithContainer
+
+configs:
+
+  backendMonolith:
+    fastApiPort: '{{ .GetEnv "BACKEND_HTTP_PORT" }}'
+
+  backendMonolithContainer:
+    containerName: backendMonolith
+    imageName: backendmonolith
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  backendMonolith:
+    ports:
+    - '{{ .GetConfig "fastApiPort" }}'
+
+envs:
+
+  backendMonolith:
+    PYTHONUNBUFFERED:
+      default: 1
+    PIPENV_DONT_LOAD_ENV:
+      from: BACKEND_MONOLITH_PIPENV_DONT_LOAD_ENV
+      default: 1
+    BACKEND_HTTP_PORT:
+      from: BACKEND_MONOLITH_HTTP_PORT
+      default: '3010'
+    BACKEND_SQLALCHEMY_DATABASE_URL:
+      from: BACKEND_MONOLITH_SQLALCHEMY_DATABASE_URL
+      default: mysql+pymysql://root:toor@localhost:3306/sample

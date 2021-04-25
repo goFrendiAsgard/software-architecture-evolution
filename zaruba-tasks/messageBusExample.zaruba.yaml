@@ -1,0 +1,53 @@
+tasks:
+
+  runMessageBusExample:
+    icon: 🐇
+    extend: core.startDockerContainer
+    timeout: 1h
+    config:
+      afterCheck: |
+        set +e
+        docker exec "${CONTAINER_NAME}" rabbitmqctl await_startup
+        until [ "$?" = "0" ]
+        do
+          docker exec "${CONTAINER_NAME}" rabbitmqctl await_startup
+          sleep 3
+        done
+    configRef: messageBusExample
+    envRef: messageBusExample
+    lconfRef: messageBusExample
+
+  stopMessageBusExampleContainer:
+    icon: 🍞
+    extend: core.stopDockerContainer
+    configRef: messageBusExample
+
+  removeMessageBusExampleContainer:
+    icon: 🌭
+    extend: core.removeDockerContainer
+    configRef: messageBusExample
+
+configs:
+
+  messageBusExample:
+    useImagePrefix: false
+    imageName: rabbitmq
+    imageTag: 3-management
+    containerName: messageBusExample
+    port::5672: 5672
+    port::15672: 15672
+    expose: config.port
+
+envs:
+
+  messageBusExample:
+    RABBITMQ_DEFAULT_USER:
+      from: RABITMQ_DEFAULT_USER
+      default: root
+    RABBITMQ_DEFAULT_PASS:
+      from: RABITMQ_DEFAULT_PASS
+      default: toor
+
+lconfigs:
+
+  messageBusExample: {}

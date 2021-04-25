@@ -1,0 +1,105 @@
+includes:
+
+- ${ZARUBA_HOME}/scripts/core.zaruba.yaml
+- zaruba-tasks/simple.zaruba.yaml
+- zaruba-tasks/setup.zaruba.yaml
+- zaruba-tasks/dbExample.zaruba.yaml
+- zaruba-tasks/messageBusExample.zaruba.yaml
+- zaruba-tasks/backendMonolith.zaruba.yaml
+- zaruba-tasks/frontendMonolith.zaruba.yaml
+- zaruba-tasks/backendGateway.zaruba.yaml
+- zaruba-tasks/frontendMicroService.zaruba.yaml
+- zaruba-tasks/backendFetcher.zaruba.yaml
+- zaruba-tasks/backendVoter.zaruba.yaml
+
+tasks:
+
+  runMonolith:
+    icon: 🌰
+    extend: core.runShellScript
+    dependencies:
+    - runFrontendMonolith
+    - runBackendMonolith
+    config:
+      start: |
+        echo "Visit http://localhost:3000"
+
+  runMicroServices:
+    icon: 🌰
+    extend: core.runShellScript
+    dependencies:
+    - runFrontendMicroService
+    - runBackendGateway
+    - runBackendFetcher
+    - runBackendVoter
+    config:
+      start: |
+        echo "Visit http://localhost:5000"
+
+  run:
+    icon: 🌰
+    dependencies:
+    - runDbExample
+    - runMessageBusExample
+    - runBackendMonolith
+    - runFrontendMonolith
+    - runBackendGateway
+    - runFrontendMicroService
+    - runBackendFetcher
+    - runBackendVoter
+
+  runContainer:
+    icon: 🥞
+    dependencies:
+    - runDbExample
+    - runMessageBusExample
+    - runBackendMonolithContainer
+    - runFrontendMonolithContainer
+    - runBackendGatewayContainer
+    - runFrontendMicroServiceContainer
+    - runBackendFetcherContainer
+    - runBackendVoterContainer
+
+  stopContainer:
+    icon: 🥞
+    dependencies:
+    - stopDbExampleContainer
+    - stopMessageBusExampleContainer
+    - stopBackendMonolithContainer
+    - stopFrontendMonolithContainer
+    - stopBackendGatewayContainer
+    - stopFrontendMicroServiceContainer
+    - stopBackendFetcherContainer
+    - stopBackendVoterContainer
+
+  removeContainer:
+    icon: 🥜
+    dependencies:
+    - removeDbExampleContainer
+    - removeMessageBusExampleContainer
+    - removeBackendMonolithContainer
+    - removeFrontendMonolithContainer
+    - removeBackendGatewayContainer
+    - removeFrontendMicroServiceContainer
+    - removeBackendFetcherContainer
+    - removeBackendVoterContainer
+
+  buildImage:
+    icon: 🍞
+    dependencies:
+    - buildBackendMonolithImage
+    - buildFrontendMonolithImage
+    - buildBackendGatewayImage
+    - buildFrontendMicroServiceImage
+    - buildBackendFetcherImage
+    - buildBackendVoterImage
+
+  pushImage:
+    icon: 🧀
+    dependencies:
+    - pushBackendMonolithImage
+    - pushFrontendMonolithImage
+    - pushBackendGatewayImage
+    - pushFrontendMicroServiceImage
+    - pushBackendFetcherImage
+    - pushBackendVoterImage

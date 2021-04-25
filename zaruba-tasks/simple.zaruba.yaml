@@ -1,0 +1,64 @@
+inputs:
+
+  vote.pokemon.name:
+    options: [charmender, squirtle, bulbasaur]
+    default: 'bulbasaur'
+    prompt: 'Pokemon to be vote'
+
+tasks:
+
+  base.simpleVote:
+    extend: core.runShellScript
+    private: true
+    config:
+      pythonScript: ./main.py
+      pokemonName: '{{ .GetValue "vote.pokemon.name" }}'
+      start: |
+        pipenv install
+        (echo 2 && echo "{{ .GetConfig "pokemonName" }}" && echo 1 && echo 3) | pipenv run python {{ .GetConfig "pythonScript" }}
+
+  base.simpleShow:
+    extend: core.runShellScript
+    private: true
+    config:
+      pythonScript: ./main.py
+      start: |
+        pipenv install
+        (echo 1 && echo 3) | pipenv run python {{ .GetConfig "pythonScript" }}
+  
+  voteSimple:
+    extend: base.simpleVote
+    location: ../simple
+    inputs:
+    - vote.pokemon.name
+  
+  showSimple:
+    extend: base.simpleShow
+    location: ../simple
+ 
+  voteSimpleDb:
+    extend: base.simpleVote
+    dependencies:
+    - runDbExample
+    location: ../simple-db
+    inputs:
+    - vote.pokemon.name
+    envRef: simpleDb
+    config:
+      afterStart: echo "Press ctrl+c to end process"
+  
+  showSimpleDb:
+    extend: base.simpleShow
+    dependencies:
+    - runDbExample
+    location: ../simple-db
+    envRef: simpleDb
+    config:
+      afterStart: echo "Press ctrl+c to end process"
+
+envs:
+
+  simpleDb:
+    CONNECTION_STRING:
+      from: 'SIMPLE_DB_CONNECTION_STRING'
+      default: 'mysql+pymysql://root:toor@localhost:3306/sample'
