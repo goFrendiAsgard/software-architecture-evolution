@@ -101,7 +101,7 @@ envs:
       default: 1
     BACKEND_HTTP_PORT:
       from: DATA_STREAMER_BACKEND_HTTP_PORT
-      default: '7010'
+      default: '7000'
     BACKEND_MESSAGE_BUS_TYPE:
       from: DATA_STREAMER_BACKEND_MESSAGE_BUS_TYPE
       default: rmq

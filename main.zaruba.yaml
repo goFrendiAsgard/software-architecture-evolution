@@ -13,6 +13,8 @@ includes:
 - zaruba-tasks/backendVoter.zaruba.yaml
 - zaruba-tasks/dbWarehouseExample.zaruba.yaml
 - zaruba-tasks/dataStreamer.zaruba.yaml
+- zaruba-tasks/dataSeeder.zaruba.yaml
+- zaruba-tasks/jupyter.zaruba.yaml
 
 tasks:
 
@@ -37,6 +39,7 @@ tasks:
     - runBackendFetcher2
     - runBackendFetcher3
     - runDataStreamer
+    - runJupyter
     config:
       start: |
         echo "Visit http://localhost:5000"

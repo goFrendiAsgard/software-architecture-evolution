@@ -30,5 +30,7 @@ backendVoter:
 dbWarehouseExample:
     mySQL       : 3307
 dataStreamer:
-    web         : 7010 (tidak melayani API request)
+    web         : 7000 (tidak melayani API request)
+jupyter:
+    web         : 8000
 ```

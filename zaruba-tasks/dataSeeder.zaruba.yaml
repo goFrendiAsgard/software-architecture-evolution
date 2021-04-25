@@ -1,0 +1,19 @@
+tasks:
+
+  seedData:
+    extend: core.runShellScript
+    location: ../data-seeder
+    dependencies:
+    - runDbWarehouseExample
+    envRef: seedData
+    config:
+      start: |
+        pipenv install
+        pipenv run python main.py
+
+envs:
+
+  seedData:
+    CONNECTION_STRING:
+      from: 'DATA_SEEDER_CONNECTION_STRING'
+      default: 'mysql+pymysql://root:toor@localhost:3307/sample'

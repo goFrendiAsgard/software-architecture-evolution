@@ -1,0 +1,29 @@
+tasks:
+
+  runJupyter:
+    extend: core.startService
+    location: ../jupyter
+    dependencies:
+    - runDbWarehouseExample
+    envRef: jupyter
+    lconfigRef: jupyter
+    config:
+      start: |
+        pipenv install
+        pipenv run jupyter notebook --port {{ .GetEnv "PORT" }}
+
+envs:
+
+  jupyter:
+    CONNECTION_STRING:
+      from: 'JUPYTER_CONNECTION_STRING'
+      default: 'mysql+pymysql://root:toor@localhost:3307/sample'
+    PORT:
+      from: 'JUPYTER_PORT'
+      default: 8000
+
+lconfigs:
+
+  jupyter:
+    ports:
+    - '{{ .GetEnv "PORT" }}'
