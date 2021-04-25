@@ -1,0 +1,122 @@
+tasks:
+
+  prepareDataStreamer:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../data-streamer
+    timeout: 1h
+    envRef: dataStreamer
+    configRef: dataStreamer
+    config:
+      start: pipenv install
+    lconfigRef: dataStreamer
+
+  testDataStreamer:
+    icon: 🐍
+    extend: core.runShellScript
+    location: ../data-streamer
+    dependencies:
+    - prepareDataStreamer
+    timeout: 1h
+    envRef: dataStreamer
+    configRef: dataStreamer
+    config:
+      start: pipenv run pytest -rP -v --cov="$(pwd)" --cov-report html
+    lconfigRef: dataStreamer
+
+  runDataStreamer:
+    icon: 🐍
+    extend: core.startService
+    location: ../data-streamer
+    dependencies:
+    - prepareDataStreamer
+    - runDbWarehouseExample
+    config:
+      start: |
+        pipenv run uvicorn main:app --reload --port={{ .GetConfig "fastApiPort" }}
+    configRef: dataStreamer
+    envRef: dataStreamer
+    lconfRef: dataStreamer
+
+  runDataStreamerContainer:
+    icon: 🥞
+    extend: core.startDockerContainer
+    dependencies:
+    - buildDataStreamerImage
+    - runDbWarehouseExample
+    configRef: dataStreamerContainer
+    lconfigRef: dataStreamer
+    envRef: dataStreamer
+
+  stopDataStreamerContainer:
+    icon: 🧀
+    extend: core.stopDockerContainer
+    configRef: dataStreamerContainer
+
+  removeDataStreamerContainer:
+    icon: 🥖
+    extend: core.removeDockerContainer
+    configRef: dataStreamerContainer
+
+  buildDataStreamerImage:
+    icon: 🥓
+    extend: core.buildDockerImage
+    location: ../data-streamer
+    timeout: 1h
+    configRef: dataStreamerContainer
+
+  pushDataStreamerImage:
+    icon: 🌯
+    extend: core.pushDockerImage
+    dependencies:
+    - buildDataStreamerImage
+    timeout: 1h
+    configRef: dataStreamerContainer
+
+configs:
+
+  dataStreamer:
+    fastApiPort: '{{ .GetEnv "BACKEND_HTTP_PORT" }}'
+
+  dataStreamerContainer:
+    containerName: dataStreamer
+    imageName: datastreamer
+    expose: lconfig.ports
+    localhost: host.docker.internal
+
+lconfigs:
+
+  dataStreamer:
+    ports:
+    - '{{ .GetEnv "BACKEND_HTTP_PORT" }}'
+
+envs:
+
+  dataStreamer:
+    PYTHONUNBUFFERED:
+      from: PYTHONUNBUFFERED
+      default: 1
+    PIPENV_DONT_LOAD_ENV:
+      from: DATA_STREAMER_PIPENV_DONT_LOAD_ENV
+      default: 1
+    BACKEND_HTTP_PORT:
+      from: DATA_STREAMER_BACKEND_HTTP_PORT
+      default: '7010'
+    BACKEND_MESSAGE_BUS_TYPE:
+      from: DATA_STREAMER_BACKEND_MESSAGE_BUS_TYPE
+      default: rmq
+    BACKEND_RABBITMQ_HOST:
+      from: DATA_STREAMER_BACKEND_RABBITMQ_HOST
+      default: localhost
+    BACKEND_RABBITMQ_USER:
+      from: DATA_STREAMER_BACKEND_RABBITMQ_USER
+      default: root
+    BACKEND_RABBITMQ_PASS:
+      from: DATA_STREAMER_BACKEND_RABBITMQ_PASS
+      default: toor
+    BACKEND_RABBITMQ_VHOST:
+      from: DATA_STREAMER_BACKEND_RABBITMQ_VHOST
+      default: /
+    BACKEND_SQLALCHEMY_DATABASE_URL:
+      from: DATA_STREAMER_BACKEND_SQLALCHEMY_DATABASE_URL
+      default: mysql+pymysql://root:toor@localhost:3307/sample

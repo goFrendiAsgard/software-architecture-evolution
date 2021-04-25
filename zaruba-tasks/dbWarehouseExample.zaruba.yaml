@@ -1,0 +1,57 @@
+tasks:
+
+  runDbWarehouseExample:
+    icon: 🐬
+    extend: core.startDockerContainer
+    timeout: 1h
+    config:
+      afterCheck: |
+        set +e
+        docker exec "${CONTAINER_NAME}" mysql -u root -p{{ .GetEnv "MYSQL_ROOT_PASSWORD"}} -e "SELECT VERSION()"
+        until [ "$?" = "0" ]
+        do
+          docker exec "${CONTAINER_NAME}" mysql -u root -p{{ .GetEnv "MYSQL_ROOT_PASSWORD"}} -e "SELECT VERSION()"
+          sleep 3
+        done
+    configRef: dbWarehouseExample
+    envRef: dbWarehouseExample
+    lconfRef: dbWarehouseExample
+
+  stopDbWarehouseExampleContainer:
+    icon: 🍲
+    extend: core.stopDockerContainer
+    configRef: dbWarehouseExample
+
+  removeDbWarehouseExampleContainer:
+    icon: 🍿
+    extend: core.removeDockerContainer
+    configRef: dbWarehouseExample
+
+configs:
+
+  dbWarehouseExample:
+    useImagePrefix: false
+    imageName: mysql
+    containerName: dbWarehouseExample
+    port::3307: 3306
+    expose: config.port
+
+envs:
+
+  dbWarehouseExample:
+    MYSQL_USER:
+      from: MYSQL_USER
+      default: mysql
+    MYSQL_PASSWORD:
+      from: MYSQL_PASSWORD
+      default: mysql
+    MYSQL_ROOT_PASSWORD:
+      from: MYSQL_ROOT_PASSWORD
+      default: toor
+    MYSQL_DATABASE:
+      from: MYSQL_DATABASE
+      default: sample
+
+lconfigs:
+
+  dbWarehouseExample: {}

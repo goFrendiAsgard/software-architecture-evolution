@@ -21,6 +21,14 @@ backendGateway:
     web         : 5010
 backendFetcher:
     web         : 5020 (tidak melayani API request)
+backendFetcher2:
+    web         : 5021 (tidak melayani API request)
+backendFetcher3:
+    web         : 5022 (tidak melayani API request)
 backendVoter:
     web         : 5030 (tidak melayani API request)
+dbWarehouseExample:
+    mySQL       : 3307
+dataStreamer:
+    web         : 7010 (tidak melayani API request)
 ```

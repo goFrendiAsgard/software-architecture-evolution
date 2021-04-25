@@ -3,3 +3,4 @@ dockerImagePrefix::default: local
 link::backend-gateway/transport: shared-libs/python/transport
 link::backend-voter/transport: shared-libs/python/transport
 link::backend-fetcher/transport: shared-libs/python/transport
+link::data-streamer/transport: shared-libs/python/transport

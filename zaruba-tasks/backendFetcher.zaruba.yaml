@@ -38,6 +38,18 @@ tasks:
     configRef: backendFetcher
     envRef: backendFetcher
     lconfRef: backendFetcher
+  
+  runBackendFetcher2:
+    extend: runBackendFetcher
+    envRefs:
+    - backendFetcher2
+    - backendFetcher
+  
+  runBackendFetcher3:
+    extend: runBackendFetcher
+    envRefs:
+    - backendFetcher3
+    - backendFetcher
 
   runBackendFetcherContainer:
     icon: 🥙
@@ -93,6 +105,16 @@ lconfigs:
     - '{{ .GetConfig "fastApiPort" }}'
 
 envs:
+
+  backendFetcher2:
+    BACKEND_HTTP_PORT:
+      from: BACKEND_FETCHER_2_BACKEND_HTTP_PORT
+      default: '5021'
+  
+  backendFetcher3:
+    BACKEND_HTTP_PORT:
+      from: BACKEND_FETCHER_2_BACKEND_HTTP_PORT
+      default: '5022'
 
   backendFetcher:
     PYTHONUNBUFFERED:
