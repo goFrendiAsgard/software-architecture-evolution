@@ -16,10 +16,10 @@ envs:
 
   jupyter:
     CONNECTION_STRING:
-      from: 'JUPYTER_CONNECTION_STRING'
-      default: 'mysql+pymysql://root:toor@localhost:3307/sample'
+      from: JUPYTER_CONNECTION_STRING
+      default: mysql+pymysql://root:toor@localhost:3307/sample
     PORT:
-      from: 'JUPYTER_PORT'
+      from: JUPYTER_PORT
       default: 8000
 
 lconfigs:

@@ -13,6 +13,7 @@ tasks:
           docker exec "${CONTAINER_NAME}" mysql -u root -p{{ .GetEnv "MYSQL_ROOT_PASSWORD"}} -e "SELECT VERSION()"
           sleep 3
         done
+        sleep 5
     configRef: dbWarehouseExample
     envRef: dbWarehouseExample
     lconfRef: dbWarehouseExample

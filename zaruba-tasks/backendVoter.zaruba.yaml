@@ -30,6 +30,8 @@ tasks:
     location: ../backend-voter
     dependencies:
     - prepareBackendVoter
+    - runDbExample
+    - runMessageBusExample
     config:
       start: |
         pipenv run uvicorn main:app --reload --port={{ .GetConfig "fastApiPort" }}
@@ -42,6 +44,8 @@ tasks:
     extend: core.startDockerContainer
     dependencies:
     - buildBackendVoterImage
+    - runDbExample
+    - runMessageBusExample
     configRef: backendVoterContainer
     lconfigRef: backendVoter
     envRef: backendVoter

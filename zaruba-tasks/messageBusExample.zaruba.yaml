@@ -13,6 +13,7 @@ tasks:
           docker exec "${CONTAINER_NAME}" rabbitmqctl await_startup
           sleep 3
         done
+        sleep 5
     configRef: messageBusExample
     envRef: messageBusExample
     lconfRef: messageBusExample

@@ -57,6 +57,7 @@ tasks:
     - runBackendVoter
     - runDbWarehouseExample
     - runDataStreamer
+    - runJupyter
 
   runContainer:
     icon: 🥞
