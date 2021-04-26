@@ -315,7 +315,7 @@ Secara umum, jika kita ingin melakukan query yang membutuhkan balasan tanpa ada 
 
 * HTTP request/response
 * GRPC
-* RPC dan message bus
+* RPC pada message bus
 
 Penggunaan message bus untuk komunikasi synchronous kadang terkesan tidak intuitif, karena message bus biasanya digunakan untuk pola komunikasi asynchronous. Namun demikian, message bus juga bisa berfungsi sebagai buffer antrian, sehingga pesan-pesan yang masuk tidak diproses secara seketika.
 
@@ -351,6 +351,21 @@ Perhatikan pada bagian yang diberi lingkaran biru. Terlihat jelas bahwa tiga bua
 
 Ini mirip dengan keberadaan beberapa kasir di bank/pasar swalayan. Semakin banyak service yang bekerja, maka antrian message pun akan semakin cepat habis. Response ke user pun akan terlihat lebih cepat.
 
+Komunikasi antara backend gateway dan backend fetcher secara detail adalah sebagai berikut:
+
+```
+Backend Gateway                                       Backend Fetcher
+===================================================   ========================
+Menerima HTTP request      ...                        ...
+...                        Menunggu balasan fetcher   ...
+Mengirim RPC ke fetcher    ...                        ...
+...                        ...                        Menerima RPC request
+...                        ...                        Mendapatkan data dari DB
+...                        ...                        Mengirim balasan
+...                        Menerima balasan           ...
+Mengirim HTTP response     ...                        ...
+```
+
 ### Backend Voter
 
 Kita bisa melihat bahwa saat user ingin menampilkan total vote, maka kita mutlak memerlukan balasan dari server.
@@ -360,6 +375,20 @@ Kenyataannya, tidak semua proses komunikasi membutuhkan balasan seketika. Misaln
 Jika kita mengamati log pada `backend-fetcher`, maka kita bisa melihat bahwa request yang dikirim oleh `backend-gateway` tidak pernah dibalas kembali.
 
 ![voter](images/arsitektur-04-data-voter.png)
+
+Komunikasi dengan backend voter secara detail adalah sebagai berikut
+
+```
+Backend Gateway           Backend Voter                   Data Streamer
+=======================   =============================   ================================
+Menerima HTTP request     ...                             ...
+Mengirim event new_vote   ...                             ...
+Mengirim HTTP response    Menerima event new_vote         ...
+...                       Menyimpan vote ke DB            ...
+...                       Mengirim event new_vote_saved   ...
+...                       ...                             Menerima event ke new_vote_saved
+...                       ...                             Menyimpan ke DB warehouse
+```
 
 ## Praktek
 
