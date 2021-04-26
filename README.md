@@ -1,6 +1,6 @@
 # Tentang Repository Ini
 
-Repository ini adalah pelengkap untuk artikel [Evolusi Perangkat Lunak](https://www.notion.so/gofrendi/Evolusi-Arsitektur-Perangkat-Lunak-1e80ad470b734ad4ab22d04e25ea372e).
+Repository ini adalah penjabaran dari artikel [Evolusi Perangkat Lunak](https://www.notion.so/gofrendi/Evolusi-Arsitektur-Perangkat-Lunak-1e80ad470b734ad4ab22d04e25ea372e).
 
 Studi kasus yang akan dipakai di sini adalah voting pokemon. Pengguna akan dapat memilih/menambahkan pokemon favorit mereka sekaligus melihat hasil voting secara keseluruhan.
 
@@ -58,6 +58,8 @@ Kita bisa mengubah port-port yang ada melalui konfigurasi environment variable. 
 
 Ini adalah arsitektur paling sederhana yang bisa buat. Arsitektur ini hanya terdiri dari sekitar 40 baris kode python. Detailnya bisa dilihat di [simple/main.py](simple/main.py). 
 
+![skema](images/arsitektur-01-skema.png)
+
 Pada dasarnya, kita akan menyimpan data voting pada variable `pokemon_vote_result` yang bertipe `dictionary`.
 
 Selanjutnya, secara terus menerus, program akan meminta inputan user berupa angka antara 1 sampai 3.
@@ -108,6 +110,8 @@ Karena itu, kali ini kita tidak lagi menggunakan struktur dictionary.
 > __CATATAN:__ Ada beberapa DBMS no-SQL yang mendukung penyimpanan dalam bentuk key-value (mirip dictionary). Misalnya redis.
 
 Detail program kali ini bisa dilihat di [simple/main.py](simple-db/main.py).
+
+![skema](images/arsitektur-02-skema.png)
 
 Jika diperhatikan dengan seksama, di sini ada beberapa perbedaan dibandingkan program sebelumnya:
 
@@ -232,17 +236,19 @@ Namun tak bisa dipungkiri, terkadang ada bagian-bagian backend yang:
 
 Pemanggilan fungsi yang semula bisa dilakukan secara internal dalam satu aplikasipun kini perlu dilakukan melalui jaringan.
 
+## Komunikasi Antar Service
+
 Secara umum, komunikasi antar service dalam microservices bisa dibedakan berdasarkan:
 * Keberadaan service yang me-manage service-service lain (Orchestration vs Choreography)
-* Apakah pengirim pesan perlu memunggu balasan atau tidak perlu (Syncrhonous vs Asyncrhonous, Command vs Query)
+* Apakah pengirim pesan perlu memunggu balasan atau tidak perlu (Synchronous vs Asynchronous, Command vs Query)
 
 Mari kita coba dalami beberapa istilah di atas:
-* Orchestration: Ada satu service yang berfungsi sebagai orchestrator untuk menentukan urutan permintaan request (misalnya setelah mendapat balasan dari service A, si orchestrator perlu mengirim request ke service B berdasarkan balasan dari A)
-* Choreography: Tidak ada service yang bergungsi serbagai orchestrator. Masing-masing service bekerja secara mandiri. Biasanya dengan cara mendengarkan event/kejadian tertentu dan mengirimkan event/kejadian lain (misalnya, setiap kali service A mendengar event tertentu, service A akan melakukan proses dan mengirimkan beberapa event lain. Service-service yang lain hanya perlu mendengar event yang sesuai dengan domain mereka)
-* Synchronous: Artinya proses pada sebuah service perlu menunggu balasan dari service lain sebelum bisa dilanjutkan.
-* Asynchronous: Artinya proses pada sebuah service bisa terus beerlanjut, terlepas ada tidaknya balasan dari service lain.
-* Command: Perintah yang tidak membutuhkan balasan.
-* Query: Permintaan data yang membutuhkan balasan.
+* __Orchestration__: Ada satu service yang berfungsi sebagai orchestrator untuk menentukan urutan permintaan request (misalnya setelah mendapat balasan dari service A, si orchestrator perlu mengirim request ke service B berdasarkan balasan dari A)
+* __Choreography__: Tidak ada service yang bergungsi serbagai orchestrator. Masing-masing service bekerja secara mandiri. Biasanya dengan cara mendengarkan event/kejadian tertentu dan mengirimkan event/kejadian lain (misalnya, setiap kali service A mendengar event tertentu, service A akan melakukan proses dan mengirimkan beberapa event lain. Service-service yang lain hanya perlu mendengar event yang sesuai dengan domain mereka)
+* __Synchronous__: Artinya proses pada sebuah service perlu menunggu balasan dari service lain sebelum bisa dilanjutkan.
+* __Asynchronous__: Artinya proses pada sebuah service bisa terus beerlanjut, terlepas ada tidaknya balasan dari service lain.
+* __Command__: Perintah yang mengubah state sistem.
+* __Query__: Permintaan data yang membutuhkan balasan tanpa adanya perubahan state.
 
 Dalam prakteknya, terminologi dan penggolongan komunikasi ini kerap kali tumpang tindih. Belum lagi, dalam banyak kasus kita perlu menggunakan beberapa pola komunikasi untuk menyesuaikan dengan use case yang kita miliki.
 
@@ -251,7 +257,7 @@ Biasanya komunikasi pada pola choreography cenderung asynchronous, sedangkan pad
 Perbandingan pola komunikasi synchronous vs asynchronous kurang lebih begini:
 
 ```
-SYNCRHONOUS
+SYNCHRONOUS
 
 Service A                  Service B
 ========================   ================================
@@ -275,11 +281,49 @@ menerima response dari B   ...                     ...
 memproses balasan          ...                     ...
 ```
 
->__CATATAN:__ Dalam kenyataannya pola asyncrhonous juga membutuhkan pemrosesan parallel atau concurrent dari sisi program. Node JS mendukung ini melalui mekanisme `Promise`, sementara Golang mendukung ini dengan `channel` dan `go routine`. Untuk bahasa-bahasa seperti C/Pascal, kita bisa menggunakan `multi-threading`.
+>__CATATAN:__ Dalam kenyataannya pola asynchronous juga membutuhkan pemrosesan parallel atau concurrent dari sisi program. Node JS mendukung ini melalui mekanisme `Promise`, sementara Golang mendukung ini dengan `channel` dan `go routine`. Untuk bahasa-bahasa seperti C/Pascal, kita bisa menggunakan `multi-threading`.
 
-Pola komunikasi asyncrhonous kerap melibatkan keberadaan message broker/message bus. Keberadaan message broker/message bus memungkinkan tiap service tidak perlu saling mengetahui posisi service lain.
+Pola komunikasi asynchronous kerap melibatkan keberadaan message broker/message bus. Keberadaan message broker/message bus memungkinkan tiap service tidak perlu saling mengetahui posisi service lain.
 
 Di satu sisi keberadaan message broker/message bus ini memudahkan kita untuk me manage service-service yang begitu banyak. Namun di sisi lain, ini bisa menjadi single point of failure juga.
+
+## Pakai Pola Komunikasi yang Mana?
+
+### Asynchronous
+
+![](images/radio.jpg)
+
+Pola komunikasi asynchronous umumnya digunakan jika kita ingin melakukan perubahan state pada sistem dan tidak membutuhkan balasan seketika. Pola komunikasi ini membutuhkan message bus sebagai jembatan komunikasi antar service.
+
+Keberadaan message bus di sini membuat setiap service tidak perlu saling mengenal satu sama lain (loosly coupled). Namun demikian, message bus juga memperkenalkan beberapa masalah baru, antara lain:
+
+* Message bus menjadi single point of failure. Jika message bus sampai mati, maka semua proses komunikasi akan terhenti.
+* Proses tracing data bisa jadi lebih susah. Kita kadang tidak yakin service mana saja  yang membuat/menghandle sebuah event.
+
+Beberapa message bus yang sering dipakai antara lain:
+
+* Nats
+* Kafka
+* RabbitMq
+
+
+### Synchronous
+
+![](images/phone.jpg)
+
+Secara umum, jika kita ingin melakukan query yang membutuhkan balasan tanpa ada perubahan state, maka pola komunikasi synchronous lebih digemari. Pola komunikasi synchronous bisa diterapkan dengan beberapa cara:
+
+* HTTP request/response
+* GRPC
+* RPC dan message bus
+
+Penggunaan message bus untuk komunikasi synchronous kadang terkesan tidak intuitif, karena message bus biasanya digunakan untuk pola komunikasi asynchronous. Namun demikian, message bus juga bisa berfungsi sebagai buffer antrian, sehingga pesan-pesan yang masuk tidak diproses secara seketika.
+
+RPC pada message bus umumnya memanfaatkan dua event.:
+* Event pertama adalah event balasan. Si pengirim pesan harus terlebih dahulu mendengarkan pesan dari event balasan sebelum mengirimkan pesannya. Nama event balasan biasanya juga ikut disertakan bersama dengan pesan yang hendak dikirim.
+* Event kedua adalah event utama. Si penerima pesan akan mendengarkan pesan dari event ini, lengkap dengan nama event balasan yang diharapkan. Selanjutnya, pesan balasan akan dikirimkan ke event balasan untuk diterima oleh pengirim pesan.
+
+## Pokemon Vote
 
 Kembali ke kasus voting pokemon kita tadi. Semisal setelah aplikasi tersebut kita launch, kita tahu bahwa request untuk melihat hasil voting ternyata jauh lebih banyak daripada requst untuk melakukan voting itu sendiri.
 
@@ -297,7 +341,7 @@ Dibandingkan dengan skema di arsitektur sebelumnya, sekarang kita bisa melihat b
 
 >__CATATAN:__ Dalam banyak kasus, service-service pada arsitektur microservices memiliki database yang berbeda-beda pula. Selain itu, untuk membaca data umumnya digunakan caching mechanism (misalnya menggunakan redis). Pada contoh ini kita melakukan penyederhanaan supaya arsitekturnya tidak semakin rumit :p
 
-## Scaling
+### Backend Fetcher
 
 Karena aplikasi backend sudah kita pecah menjadi beberapa service, maka kita bisa menerapkan aturan scaling yang berbeda pada masing-masing aplikasi. Misalnya, kita bisa membuat tiga buah service `backend-fetcher` yang masing-masing mendengarkan pesan dari event yang sama.
 
@@ -307,7 +351,7 @@ Perhatikan pada bagian yang diberi lingkaran biru. Terlihat jelas bahwa tiga bua
 
 Ini mirip dengan keberadaan beberapa kasir di bank/pasar swalayan. Semakin banyak service yang bekerja, maka antrian message pun akan semakin cepat habis. Response ke user pun akan terlihat lebih cepat.
 
-## Fire and Forget
+### Backend Voter
 
 Kita bisa melihat bahwa saat user ingin menampilkan total vote, maka kita mutlak memerlukan balasan dari server.
 
