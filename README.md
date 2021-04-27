@@ -270,12 +270,11 @@ melanjutkan proses         ...
 
 ASYNCHRONOUS
 
-Service A               Service B
-=====================   =======================
-mengirim request ke B   ...
-melanjutkan proses      menerima request dari A
-melanjutkan proses      melakukan proses
-melanjutkan proses      mengirim balasan ke A
+Service A                  Service B
+=====================      =======================
+mengirim request ke B      ...
+melanjutkan proses         menerima request dari A
+melanjutkan proses         melakukan proses
 ```
 
 >__CATATAN:__ Terkadang pola asynchronous juga membutuhkan pemrosesan parallel atau concurrent dari sisi program. Node JS mendukung ini melalui mekanisme `Promise`, sementara Golang mendukung ini dengan `channel` dan `go routine`. Untuk bahasa-bahasa seperti C/Pascal, kita bisa menggunakan `multi-threading`.
