@@ -1,6 +1,6 @@
 from typing import Mapping
 from sqlalchemy import create_engine
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, Engine
 from sqlalchemy.sql import text
 from sqlalchemy.orm import Session
 from sqlalchemy import Boolean, Column, Integer, String, DateTime
@@ -32,13 +32,13 @@ def get_vote_result(engine: Engine) -> Mapping[str, str]:
     sql = 'SELECT name, count(id) AS vote FROM pokemon_vote GROUP BY name'
     connection = engine.connect()
     pokemon_vote_result_list = connection.execute(text(sql))
-    results = {}
+    results = []
     for pokemon_vote_result in pokemon_vote_result_list:
         pokemon_name = pokemon_vote_result[0]
         vote = pokemon_vote_result[1]
-        results[pokemon_name] = vote
+        results.append('{pokemon_name}\t: {vote}'.format(pokemon_name=pokemon_name, vote=vote))
     connection.close()
-    return results
+    return '\n'.join(results)
 
 while True:
     print('== POKEMON VOTER')
