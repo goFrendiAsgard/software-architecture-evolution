@@ -225,7 +225,7 @@ Demikian pula secara periodik dan saat frontend pertama kali dijalankan, maka ap
 
 > __CATATAN:__ Beberapa framework seperti Laravel/Django menganut konsep MVC/MVT di mana frontend dan backend terletak dalam code base yang sama. Proses rendering frontend pun sebagian dilakukan di server. Framework-framework tersebut sangat disarankan jika kita tidak memiliki tim frontend yang dedicated.
 
-# Arsitektur 4: Microservices
+# Arsitektur 4: Service Oriented Architecture/Microservices
 
 Dalam banyak kasus, arsitektur client-server dengan backend monolith sudah cukup untuk menangani kebutuhan bisnis.
 
@@ -270,18 +270,15 @@ melanjutkan proses         ...
 
 ASYNCHRONOUS
 
-Service A                                          Service B
-================================================   =======================
-menunggu balasan dari B    ...                     ...
-...                        mengirim request ke B   ...
-...                        melanjutkan proses      menerima request dari A
-...                        melanjutkan proses      melakukan proses
-...                        melanjutkan proses      mengirim balasan ke A
-menerima response dari B   ...                     ...
-memproses balasan          ...                     ...
+Service A               Service B
+=====================   =======================
+mengirim request ke B   ...
+melanjutkan proses      menerima request dari A
+melanjutkan proses      melakukan proses
+melanjutkan proses      mengirim balasan ke A
 ```
 
->__CATATAN:__ Dalam kenyataannya pola asynchronous juga membutuhkan pemrosesan parallel atau concurrent dari sisi program. Node JS mendukung ini melalui mekanisme `Promise`, sementara Golang mendukung ini dengan `channel` dan `go routine`. Untuk bahasa-bahasa seperti C/Pascal, kita bisa menggunakan `multi-threading`.
+>__CATATAN:__ Terkadang pola asynchronous juga membutuhkan pemrosesan parallel atau concurrent dari sisi program. Node JS mendukung ini melalui mekanisme `Promise`, sementara Golang mendukung ini dengan `channel` dan `go routine`. Untuk bahasa-bahasa seperti C/Pascal, kita bisa menggunakan `multi-threading`.
 
 Pola komunikasi asynchronous kerap melibatkan keberadaan message broker/message bus. Keberadaan message broker/message bus memungkinkan tiap service tidak perlu saling mengetahui posisi service lain.
 
